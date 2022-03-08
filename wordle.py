@@ -27,10 +27,12 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
     word_list = possible_words.get_word_list()
     word = random.choice(word_list)
 
-    curses.init_pair(GREEN, curses.COLOR_BLACK, curses.COLOR_GREEN)
-    curses.init_pair(YELLOW, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-    curses.init_pair(CYAN, curses.COLOR_BLACK, curses.COLOR_CYAN)
-    curses.init_pair(RED, curses.COLOR_BLACK, curses.COLOR_RED)
+    if curses.has_colors():
+        curses.use_default_colors()
+        curses.init_pair(GREEN, curses.COLOR_BLACK, curses.COLOR_GREEN)
+        curses.init_pair(YELLOW, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+        curses.init_pair(CYAN, curses.COLOR_BLACK, curses.COLOR_CYAN)
+        curses.init_pair(RED, curses.COLOR_BLACK, curses.COLOR_RED)
 
     guesses = []
     guess = ""
@@ -45,7 +47,7 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
         # Cursor coords
         y = 0
 
-        stdscr.addstr(y, 0, f"The word of the day is: {word}")
+        # stdscr.addstr(y, 0, f"The word of the day is: {word}")
         y += 2
 
         # Print previous guesses (colorized)
@@ -96,9 +98,10 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
             x = 0
             continue
         elif letter == curses.KEY_BACKSPACE:
-            guess = guess[:-1]
-            x -= 1
-            stdscr.move(y, x)
+            if guess and x > 0:
+                guess = guess[:-1]
+                x -= 1
+                stdscr.move(y, x)
         elif letter.isalpha() and len(guess) < 5:
             guess += letter.lower()
             x += 1
