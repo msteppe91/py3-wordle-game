@@ -90,6 +90,7 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
             stdscr.chgat(y, 0 + f, 1, curses.A_UNDERLINE)
         stdscr.move(y, x)
         letter = stdscr.get_wch()
+        logger.debug(f"{letter=}")
 
         # Evaluate keyboard input
         if letter == '\n' and len(guess) == 5 and guess in word_list:
@@ -110,7 +111,8 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
             pass
             # raise SystemError(f"Bad key entered: {letter=}")
 
-        if letter == '1':
+        # Exit game on "1" or "ESC" key
+        if letter == '1' or letter == '\x1b':
             return 0
 
         # REDRAW
