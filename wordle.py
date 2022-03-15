@@ -14,6 +14,10 @@ YELLOW = 2
 CYAN = 3
 RED = 4
 
+KEYBOARD = ("q w e r t y u i o p\n"
+            " a s d f g h j k l \n"
+            "   z x c v b n m   ")
+
 
 def play_wordle(stdscr: curses._CursesWindow) -> int:
     """
@@ -36,6 +40,7 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
 
     guesses = []
     guess = ""
+    letters_guessed = set()
 
     # Cursor coords
     x = 0
@@ -48,6 +53,7 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
         y = 0
 
         # stdscr.addstr(y, 0, f"The word of the day is: {word}")
+        logger.debug(f"{word=}")
         y += 2
 
         # Print previous guesses (colorized)
@@ -60,14 +66,17 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
                 if ltr == word[idx]:
                     logger.debug(f"{ltr} == {word[idx]}  removing {ltr} from {available_letters}")
                     stdscr.addch(y, idx, ltr, curses.color_pair(GREEN))
+                    letters_guessed.add((ltr, GREEN))
                     available_letters.remove(ltr)
                 elif ltr in available_letters:
                     logger.debug(f"{ltr} in {word}  removing {ltr} from {available_letters}")
                     stdscr.addch(y, idx, ltr, curses.color_pair(YELLOW))
+                    letters_guessed.add((ltr, YELLOW))
                     available_letters.remove(ltr)
                 else:
                     logger.debug(f"{ltr} not in {word}")
                     stdscr.addch(y, idx, ltr)
+                    letters_guessed.add((ltr, RED))
                 logger.debug("")
             y += 2
 
@@ -84,11 +93,29 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
                 stdscr.get_wch()
                 return 0
 
-        # Ask user for guess
+        # Print line for user guess
         stdscr.addstr(y, 0, guess)
         for f in range(5):
             stdscr.chgat(y, 0 + f, 1, curses.A_UNDERLINE)
-        stdscr.move(y, x)
+        user_input_x = x
+        user_input_y = y
+
+        # Print keyboard under line
+        y += 2
+        for row in KEYBOARD.splitlines():
+            # logger.debug(f"{row=}")
+            for idx, key in enumerate(row):
+                # logger.debug(f"scanning for {key} in {letters_guessed}")
+                gsd_tpl = [item for item in letters_guessed if key in item]
+                # logger.debug(f"{gsd_tpl=}")
+                if gsd_tpl:
+                    stdscr.addch(y, idx, gsd_tpl[0][0], curses.color_pair(gsd_tpl[0][1]))
+                else:
+                    stdscr.addch(y, idx, key)
+            y += 1
+
+            # Get user guess and control cursor
+        stdscr.move(user_input_y, user_input_x)
         letter = stdscr.get_wch()
         logger.debug(f"{letter=}")
 
@@ -107,9 +134,6 @@ def play_wordle(stdscr: curses._CursesWindow) -> int:
             guess += letter.lower()
             x += 1
             stdscr.move(y, x)
-        else:
-            pass
-            # raise SystemError(f"Bad key entered: {letter=}")
 
         # Exit game on "1" or "ESC" key
         if letter == '1' or letter == '\x1b':
